@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="A professional Student Registration System for college-level management. Register, search, edit, and manage student records easily." />
+  <title>Student Registration System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast" role="alert" aria-live="polite"></div>
+
+  <!-- Edit Modal -->
+  <div id="editModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 id="editModalTitle">
+          <span class="modal-icon">✏️</span> Edit Student Details
+        </h2>
+        <button id="closeModal" class="close-btn" aria-label="Close modal">✕</button>
+      </div>
+      <form id="editForm" novalidate>
+        <input type="hidden" id="editIndex" />
+        <div class="form-group">
+          <label for="editName">Student Name</label>
+          <input type="text" id="editName" placeholder="Enter student name" autocomplete="off" />
+          <span class="field-error" id="editNameError"></span>
+        </div>
+        <div class="form-group">
+          <label for="editRegNo">Register Number</label>
+          <input type="text" id="editRegNo" placeholder="Enter register number" autocomplete="off" />
+          <span class="field-error" id="editRegNoError"></span>
+        </div>
+        <div class="form-group">
+          <label for="editDept">Department</label>
+          <select id="editDept">
+            <option value="">-- Select Department --</option>
+            <option value="Computer Science">Computer Science</option>
+            <option value="Information Technology">Information Technology</option>
+            <option value="Electronics and Communication">Electronics and Communication</option>
+            <option value="Electrical and Electronics">Electrical and Electronics</option>
+            <option value="Mechanical Engineering">Mechanical Engineering</option>
+            <option value="Civil Engineering">Civil Engineering</option>
+          </select>
+          <span class="field-error" id="editDeptError"></span>
+        </div>
+        <div class="form-group">
+          <label>Gender</label>
+          <div class="radio-group" id="editGenderGroup">
+            <label class="radio-label">
+              <input type="radio" name="editGender" value="Male" /> Male
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="editGender" value="Female" /> Female
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="editGender" value="Other" /> Other
+            </label>
+          </div>
+          <span class="field-error" id="editGenderError"></span>
+        </div>
+        <div class="form-group">
+          <label for="editCourse">Course</label>
+          <select id="editCourse">
+            <option value="">-- Select Course --</option>
+            <option value="B.Sc">B.Sc</option>
+            <option value="B.Com">B.Com</option>
+            <option value="BCA">BCA</option>
+            <option value="B.Tech">B.Tech</option>
+            <option value="B.E">B.E</option>
+            <option value="M.Sc">M.Sc</option>
+            <option value="M.Com">M.Com</option>
+          </select>
+          <span class="field-error" id="editCourseError"></span>
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="cancelEdit" class="btn btn-outline">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete Confirm Modal -->
+  <div id="deleteModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+    <div class="modal-box modal-box--small">
+      <div class="modal-header">
+        <h2 id="deleteModalTitle">
+          <span class="modal-icon">🗑️</span> Confirm Delete
+        </h2>
+        <button id="closeDeleteModal" class="close-btn" aria-label="Close modal">✕</button>
+      </div>
+      <p class="delete-message">Are you sure you want to delete this student record? This action cannot be undone.</p>
+      <div class="modal-actions">
+        <button id="cancelDelete" class="btn btn-outline">Cancel</button>
+        <button id="confirmDelete" class="btn btn-danger">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HEADER -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="header-brand">
+        <div class="logo-wrapper">
+          <img src="college_logo.jpg" alt="College Logo" class="logo-img" />
+        </div>
+        <div class="brand-text">
+          <h1 class="brand-title">Student Registration System</h1>
+          <p class="brand-subtitle">Academic Management Portal</p>
+        </div>
+      </div>
+      <div class="header-stats">
+        <div class="stat-pill" id="totalStudentsStat">
+          <span class="stat-number" id="totalCount">0</span>
+          <span class="stat-label">Students</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <main class="main-container">
+
+    <!-- NAV TABS -->
+    <nav class="tab-nav" aria-label="Main navigation">
+      <button class="tab-btn active" id="tabRegister" data-tab="register" aria-selected="true">
+        <span class="tab-icon">📝</span> Register Student
+      </button>
+      <button class="tab-btn" id="tabRecords" data-tab="records" aria-selected="false">
+        <span class="tab-icon">📋</span> Student Records
+        <span class="badge" id="recordBadge">0</span>
+      </button>
+    </nav>
+
+    <!-- REGISTER TAB -->
+    <section id="tabPanelRegister" class="tab-panel active" aria-labelledby="tabRegister">
+      <div class="panel-card">
+        <div class="panel-card-header">
+          <div class="panel-title-block">
+            <div class="panel-icon-circle">📝</div>
+            <div>
+              <h2 class="panel-title">New Student Registration</h2>
+              <p class="panel-subtitle">Fill in all the fields to register a new student</p>
+            </div>
+          </div>
+        </div>
+
+        <form id="registrationForm" novalidate>
+          <div class="form-grid">
+            <!-- Student Name -->
+            <div class="form-group">
+              <label for="studentName">
+                <span class="label-icon">👤</span> Student Name <span class="required">*</span>
+              </label>
+              <div class="input-wrapper">
+                <input
+                  type="text"
+                  id="studentName"
+                  placeholder="Enter full name"
+                  autocomplete="off"
+                  aria-required="true"
+                />
+                <span class="input-icon">👤</span>
+              </div>
+              <span class="field-error" id="studentNameError" role="alert"></span>
+            </div>
+
+            <!-- Register Number -->
+            <div class="form-group">
+              <label for="regNumber">
+                <span class="label-icon">🔢</span> Register Number <span class="required">*</span>
+              </label>
+              <div class="input-wrapper">
+                <input
+                  type="text"
+                  id="regNumber"
+                  placeholder="e.g. 2024CS001"
+                  autocomplete="off"
+                  aria-required="true"
+                />
+                <span class="input-icon">🔢</span>
+              </div>
+              <span class="field-error" id="regNumberError" role="alert"></span>
+            </div>
+
+            <!-- Department -->
+            <div class="form-group">
+              <label for="department">
+                <span class="label-icon">🏛️</span> Department <span class="required">*</span>
+              </label>
+              <div class="input-wrapper select-wrapper">
+                <select id="department" aria-required="true">
+                  <option value="">-- Select Department --</option>
+                  <option value="Computer Science">Computer Science</option>
+                  <option value="Information Technology">Information Technology</option>
+                  <option value="Electronics and Communication">Electronics and Communication</option>
+                  <option value="Electrical and Electronics">Electrical and Electronics</option>
+                  <option value="Mechanical Engineering">Mechanical Engineering</option>
+                  <option value="Civil Engineering">Civil Engineering</option>
+                </select>
+                <span class="select-arrow">▼</span>
+              </div>
+              <span class="field-error" id="departmentError" role="alert"></span>
+            </div>
+
+            <!-- Course -->
+            <div class="form-group">
+              <label for="course">
+                <span class="label-icon">🎓</span> Course <span class="required">*</span>
+              </label>
+              <div class="input-wrapper select-wrapper">
+                <select id="course" aria-required="true">
+                  <option value="">-- Select Course --</option>
+                  <option value="B.Sc">B.Sc</option>
+                  <option value="B.Com">B.Com</option>
+                  <option value="BCA">BCA</option>
+                  <option value="B.Tech">B.Tech</option>
+                  <option value="B.E">B.E</option>
+                  <option value="M.Sc">M.Sc</option>
+                  <option value="M.Com">M.Com</option>
+                </select>
+                <span class="select-arrow">▼</span>
+              </div>
+              <span class="field-error" id="courseError" role="alert"></span>
+            </div>
+
+            <!-- Gender -->
+            <div class="form-group form-group--full">
+              <label>
+                <span class="label-icon">⚧</span> Gender <span class="required">*</span>
+              </label>
+              <div class="radio-group" id="genderGroup" role="radiogroup" aria-label="Gender selection">
+                <label class="radio-label" id="radioMaleLabel">
+                  <input type="radio" name="gender" value="Male" id="radioMale" />
+                  <span class="radio-custom"></span>
+                  <span class="radio-text">♂ Male</span>
+                </label>
+                <label class="radio-label" id="radioFemaleLabel">
+                  <input type="radio" name="gender" value="Female" id="radioFemale" />
+                  <span class="radio-custom"></span>
+                  <span class="radio-text">♀ Female</span>
+                </label>
+                <label class="radio-label" id="radioOtherLabel">
+                  <input type="radio" name="gender" value="Other" id="radioOther" />
+                  <span class="radio-custom"></span>
+                  <span class="radio-text">⚧ Other</span>
+                </label>
+              </div>
+              <span class="field-error" id="genderError" role="alert"></span>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" id="resetBtn" class="btn btn-outline">
+              <span>↺</span> Reset Form
+            </button>
+            <button type="submit" id="submitBtn" class="btn btn-primary btn-submit">
+              <span class="btn-icon">✓</span> Submit Registration
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- RECORDS TAB -->
+    <section id="tabPanelRecords" class="tab-panel" aria-labelledby="tabRecords">
+      <div class="panel-card">
+        <div class="panel-card-header records-header">
+          <div class="panel-title-block">
+            <div class="panel-icon-circle">📋</div>
+            <div>
+              <h2 class="panel-title">Student Records</h2>
+              <p class="panel-subtitle">View, search, edit and delete registered students</p>
+            </div>
+          </div>
+          <div class="search-block">
+            <div class="search-input-wrapper">
+              <span class="search-icon">🔍</span>
+              <input
+                type="text"
+                id="searchInput"
+                placeholder="Search by name or register number..."
+                aria-label="Search students"
+                autocomplete="off"
+              />
+              <button id="clearSearch" class="clear-search-btn" aria-label="Clear search" title="Clear search">✕</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-cards" id="summaryCards">
+          <div class="summary-card summary-card--blue">
+            <div class="summary-card-value" id="summaryTotal">0</div>
+            <div class="summary-card-label">Total Students</div>
+          </div>
+          <div class="summary-card summary-card--green">
+            <div class="summary-card-value" id="summaryMale">0</div>
+            <div class="summary-card-label">Male</div>
+          </div>
+          <div class="summary-card summary-card--pink">
+            <div class="summary-card-value" id="summaryFemale">0</div>
+            <div class="summary-card-label">Female</div>
+          </div>
+          <div class="summary-card summary-card--purple">
+            <div class="summary-card-value" id="summaryOther">0</div>
+            <div class="summary-card-label">Other</div>
+          </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-responsive">
+          <table id="studentsTable" aria-label="Student records table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Student Name</th>
+                <th>Register No.</th>
+                <th>Department</th>
+                <th>Gender</th>
+                <th>Course</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody">
+              <!-- Dynamic rows -->
+            </tbody>
+          </table>
+          <div id="emptyState" class="empty-state">
+            <div class="empty-state-icon">🎓</div>
+            <h3>No Students Registered Yet</h3>
+            <p>Register your first student using the Registration tab.</p>
+            <button class="btn btn-primary" id="goToRegisterBtn">Register a Student</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="site-footer">
+    <p>&copy; 2024 Student Registration System &mdash; Academic Management Portal. All rights reserved.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
